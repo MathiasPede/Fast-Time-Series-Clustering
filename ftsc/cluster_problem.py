@@ -9,7 +9,7 @@
 import numpy as np
 import math
 from .util import low_rank_approx
-from .distance_functions import compute_distance, compute_row
+from .distance_functions import compute_distance, compute_row, compute_distance_matrix
 
 
 class ClusterProblem:
@@ -71,7 +71,7 @@ class ClusterProblem:
             self.matrix[row_index, :] = self.solved_matrix[row_index, :]
         else:
             if np.isnan(self.matrix[row_index, :]).any():
-                row = compute_row(self.series[:,1:], row_index, self.compare, self.compare_args)
+                row = compute_row(self.series, row_index, self.compare, self.compare_args)
                 self.matrix[row_index, :] = row
                 self.matrix[:, row_index] = row
         return self.matrix[row_index, :]
@@ -81,15 +81,15 @@ class ClusterProblem:
             self.matrix[:, col_index] = self.solved_matrix[:, col_index]
         else:
             if np.isnan(self.matrix[col_index, :]).any():
-                row = compute_row(self.series[:,1:], col_index, self.compare, self.compare_args)
+                row = compute_row(self.series, col_index, self.compare, self.compare_args)
                 self.matrix[col_index, :] = row
                 self.matrix[:, col_index] = row
         return self.matrix[:, col_index]
 
     def sample_full_matrix(self):
         if self.solved_matrix is None:
-            for i in range(self.cp_size()):
-                self.sample_row(i)
+            self.solved_matrix = compute_distance_matrix(self.series, self.compare, self.compare_args)
+            self.matrix = self.solved_matrix
         else:
             self.matrix = self.solved_matrix
         return self.matrix
@@ -165,15 +165,6 @@ class ClusterProblem:
 
     def get_best_possible_error(self, rank):
         return self.get_relative_error(self.get_best_approx_for_rank(rank))
-
-    def get_cluster_labels(self):
-        result = np.array(self.cp_size(), dtype=int)
-        for i in range(self.cp_size()):
-            result[i] = self.series[i][0]
-        return result
-
-    def make_non_sampled_copy(self):
-        return ClusterProblem(self.series, self.compare, start_index=self.start_index, solved_matrix=self.solved_matrix)
 
     def reset_matrix(self):
         self.matrix[:] = np.NaN

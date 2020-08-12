@@ -15,17 +15,20 @@ def load_timeseries_from_tsv(path):
     logger.debug("Loading data from: " + path)
     data = np.genfromtxt(path, delimiter='\t')
     logger.debug("Loaded " + str(len(data)) + " data entries")
-    return data
+    labels, series = data[:, 0], data[:, 1:]
+    return labels, series
 
 
 def load_timeseries_from_multiple_tsvs(*args):
-    size = len(*args)
-    all_data = []
-    for i in range(size):
-        data = load_timeseries_from_tsv(*args[i])
-        all_data.append(data)
-    result = np.concatenate(all_data)
-    return result
+    all_labels = []
+    all_series = []
+    for path in args:
+        labels, series = load_timeseries_from_tsv(path)
+        all_labels.append(labels)
+        all_series.append(series)
+    result_labels = np.concatenate(all_labels)
+    result_series = np.concatenate(all_series)
+    return result_labels, result_series
 
 
 

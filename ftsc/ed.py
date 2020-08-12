@@ -124,15 +124,26 @@ def ed_matrix_fast(s, block=None, parallel=True, compact=False):
     return dists_matrix
 
 
-def ed_matrix_py(series, penalty=0.01):
+def ed_matrix_py(series, penalty=0.01, block=None, compact=False):
     size = len(series)
     result = np.zeros((size, size), dtype=float)
 
-    for i in range(size):
-        for j in range(i, size):
-            result[i, j] = ed(series[i], series[j], {'c': penalty})
-            result[j, i] = result[i, j]
+    if block is None:
+        for i in range(size):
+            for j in range(i, size):
+                result[i, j] = ed(series[i], series[j], {'c': penalty})
+                result[j, i] = result[i, j]
+    else:
+        for i in range(block[0][0], block[0][1]):
+            for j in range(block[1][0], block[1][0]):
+                result[i, j] = ed(series[i], series[j], {'c': penalty})
+                result[j, i] = result[i, j]
+
+    if compact:
+        return result.flatten()
+
     return result
+
 
 
 def try_import_c():
