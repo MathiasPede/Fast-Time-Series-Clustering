@@ -47,7 +47,8 @@ def ed_nogil(double[:] s1, double[:] s2):
             logger.debug("Warning: Sequence 2 passed to method distance is not C-contiguous. " +
                          "The sequence will be copied.")
             s2 = s2.copy()
-    return ed_nogil_c(&s1[0], &s2[0], len(s1))
+    length = min(len(s1), len(s2))
+    return ed_nogil_c(&s1[0], &s2[0], length)
 
 
 @cython.boundscheck(False) # turn off bounds-checking for entire function

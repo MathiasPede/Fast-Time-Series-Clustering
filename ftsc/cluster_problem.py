@@ -8,11 +8,11 @@
 
 import numpy as np
 import math
-import best_low_rank_approximation as blra
+from .util import low_rank_approx
 
 
 class ClusterProblem:
-    def __init__(self, series, compare, start_index=1, solved_matrix=None):
+    def __init__(self, series, compare, compare_args={}, start_index=1, solved_matrix=None):
         """
         Creates a cluster problem objects, which contains the data objects. A distance matrix is created with initially
         NaN values and entries can be computed based on index using the 'compare' function
@@ -24,6 +24,7 @@ class ClusterProblem:
         self.series = series
         self.start_index = start_index
         self.compare = compare
+        self.compare_args = compare_args
         self.size = len(series)
         self.matrix = np.empty((self.size, self.size), dtype=np.float_)
         self.matrix[:] = np.NaN
@@ -52,7 +53,7 @@ class ClusterProblem:
             if self.solved_matrix is not None:
                 value = self.solved_matrix[x][y]
             else:
-                value = self.compare(self.get_time_serie(x), self.get_time_serie(y))
+                value = self.compare(self.get_time_serie(x), self.get_time_serie(y), self.compare_args)
             self.write(x, y, value)
         return value
 
@@ -139,7 +140,7 @@ class ClusterProblem:
         return s
 
     def get_best_approx_for_rank(self, k):
-        return blra.low_rank_approx(SVD=self.get_svd(), r=k)
+        return low_rank_approx(SVD=self.get_svd(), r=k)
 
     def get_frobenius_norm(self):
         if self.solved_matrix is not None:
@@ -170,3 +171,6 @@ class ClusterProblem:
 
     def reset_matrix(self):
         self.matrix[:] = np.NaN
+
+    def get_ground_truths(self):
+        return self.series[:, 0]

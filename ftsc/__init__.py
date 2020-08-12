@@ -10,7 +10,7 @@ import logging
 
 logger = logging.getLogger("ftsc")
 
-from . import aca, solradm, helper, data_loader, clustering, cluster_problem
+from . import aca, solradm, data_loader, clustering, cluster_problem
 
 try:
     from . import ed_c
