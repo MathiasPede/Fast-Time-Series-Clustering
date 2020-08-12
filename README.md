@@ -81,9 +81,11 @@ dataset contains 5000 time series of length 140.
 
     labels, series = load_timeseries_from_multiple_tsvs(path1, path2)
     cp = ClusterProblem(series, "dtw")
+    
+    rank = 20
 
     start_time = time.time()
-    approx = solradm(cp, 20, epsilon=2.0)
+    approx = solradm(cp, rank, epsilon=2.0)
     end_time = time.time()
     print("Time spent on approximation: " + str(end_time - start_time) + " seconds")
 
