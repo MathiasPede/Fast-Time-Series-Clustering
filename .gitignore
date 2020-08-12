@@ -6,3 +6,13 @@ ftsc/msm_c.c
 ftsc/ed_c.cp38-win_amd64.pyd
 ftsc/ed_c.c
 build/
+ftsc/__pycache__/__init__.cpython-38.pyc
+ftsc/__pycache__/aca.cpython-38.pyc
+ftsc/__pycache__/cluster_problem.cpython-38.pyc
+ftsc/__pycache__/clustering.cpython-38.pyc
+ftsc/__pycache__/data_loader.cpython-38.pyc
+ftsc/__pycache__/distance_functions.cpython-38.pyc
+ftsc/__pycache__/ed.cpython-38.pyc
+ftsc/__pycache__/solradm.cpython-38.pyc
+ftsc/__pycache__/msm.cpython-38.pyc
+ftsc/__pycache__/util.cpython-38.pyc

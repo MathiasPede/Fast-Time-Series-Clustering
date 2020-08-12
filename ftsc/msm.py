@@ -8,9 +8,8 @@ Based on dtw from dtaidistance
 :license: Apache License, Version 2.0, see LICENSE for details.
 """
 import logging
-import math
 import numpy as np
-from .util import _print_library_missing, distances_array_to_matrix, _distance_matrix_length
+from ftsc.util import _print_library_missing, distances_array_to_matrix, _distance_matrix_length
 
 from dtaidistance.util import SeriesContainer, dtaidistance_dir
 
@@ -18,9 +17,9 @@ logger = logging.getLogger("ftsc")
 
 msm_c = None
 try:
-    import msm_c
+    import ftsc.msm_c as msm_c
 except ImportError:
-    # logger.info('C library not available')
+    logger.info('C library not available')
     msm_c = None
 
 DTYPE = np.double
@@ -155,7 +154,7 @@ def msm_matrix_py(series, penalty=0.01):
 def try_import_c():
     global msm_c
     try:
-        import msm_c
+        import ftsc.msm_c as msm_c
     except ImportError as exc:
         print('Cannot import C library')
         print(exc)

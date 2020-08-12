@@ -287,13 +287,6 @@ def find_orthonormal_basis(dimension, X, given=None):
     return basis
 
 
-def make_normal_indentity(dimension, X):
-    basis = np.identity(dimension)
-    for i in range(dimension):
-        basis[:, i] = normalize_on_distribution(basis[:, i], X)
-    return basis
-
-
 def get_inner_product(v1, v2, X):
     first_values = np.dot(X, v1)
     second_values = np.dot(X, v2)

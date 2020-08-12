@@ -2,14 +2,17 @@
 TRIANGLE FIXING TO FIND THE NEAREST MATRIX THAT HAS THE TRIANGLE INEQUALITY PROPERTY
 """
 import numpy as np
+import logging
 from .util import distances_array_to_matrix_with_diagonal, distances_matrix_to_array_with_diagonal, \
     _print_library_missing
 
+logger = logging.getLogger("ftsc")
+
 triangle_fixing_c = None
 try:
-    import triangle_fixing_c
+    import ftsc.triangle_fixing_c as triangle_fixing_c
 except ImportError:
-    # logger.info('C library not available')
+    logger.info('C library not available')
     triangle_fixing_c = None
 
 

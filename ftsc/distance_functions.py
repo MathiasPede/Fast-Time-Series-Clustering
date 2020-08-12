@@ -28,7 +28,7 @@ def dtw_matrix(series, args: dict):
         block = args['block']
     else:
         block=None
-    return distance_matrix_fast(series, window=window, block=block)
+    return distance_matrix_fast(series, window=window, block=block, )
 
 
 functions = {
@@ -38,15 +38,15 @@ functions = {
 }
 
 
-def compute_distance(s1, s2, func, args):
+def compute_distance(s1, s2, func, args=None):
     if args is None:
         args={}
     compare = functions[func][0]
     return compare(s1, s2, args)
 
 
-def compute_distance_matrix(series, func, args):
+def compute_distance_matrix(series, func, args=None):
     if args is None:
         args={}
-    compare = functions[func][0]
+    compare = functions[func][1]
     return compare(series, args)

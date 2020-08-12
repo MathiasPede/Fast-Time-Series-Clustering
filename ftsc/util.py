@@ -108,8 +108,5 @@ def _distance_matrix_length(block, nb_series):
 
 
 def _print_library_missing(raise_exception=True):
-    msg = "The compiled C library is not available.\n" +\
-          "See the documentation for alternative installation options."
+    msg = "The compiled C library is not available.\n"
     logger.error(msg)
-    if raise_exception:
-        raise Exception(msg)

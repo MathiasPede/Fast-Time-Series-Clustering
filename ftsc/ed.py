@@ -19,7 +19,7 @@ logger = logging.getLogger("timeseries.distance")
 
 ed_c = None
 try:
-    import ed_c
+    import ftsc.ed_c as ed_c
 except ImportError:
     # logger.info('C library not available')
     ed_c = None
@@ -117,7 +117,7 @@ def ed_matrix_py(series, penalty=0.01):
 def try_import_c():
     global ed_c
     try:
-        import ed_c
+        import ftsc.ed_c as ed_c
     except ImportError as exc:
         print('Cannot import C library')
         print(exc)
