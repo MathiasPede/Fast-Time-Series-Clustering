@@ -2,11 +2,9 @@
 Similarity Preserving Representation Learning (SPRL) for Time Series Clustering
 """
 
-import cluster_problem as cp
+import ftsc.cluster_problem as cp
 import numpy as np
 import random as rnd
-import data_loader as dl
-import distance_functions as df
 from math import log, floor, pow, sqrt, atan2, cos
 
 
@@ -142,38 +140,4 @@ def compute_distances_with_zero(data, func):
     for i in range(size):
         distances[i] = func(data[i][1:], np.array([0], dtype=float))
     return distances
-
-
-if __name__ == "__main__":
-    import data_loader as dl
-    from distance_functions import calculate_dtw_similarity
-    from singular_values import calculate_best_relative_error_rank
-    """
-    Start testing
-    """
-    data_name = "ECG5000"
-    rank = 20
-    max_iterations = 20
-    sample_factor = 20
-    debug = True
-
-    # Read data from csv
-    my_data = dl.read_train_and_test_data(data_name, debug=debug)
-    print("Size: " + str(len(my_data)))
-
-    solved_matrix = np.load("Matrix_data/" + data_name + "_sim_dtw.npy")
-
-    # Create the problem class with internally the samplable matrix
-    problem = cp.ClusterProblem(my_data, calculate_dtw_similarity, solved_matrix=solved_matrix)
-
-    approx = spiral(problem, rank, sample_factor=sample_factor, max_iterations=max_iterations)
-
-    print("Percentage sampled = " + str(problem.percentage_sampled()))
-    sample_factor = problem.get_amount_of_sampled_values() / (rank * problem.cp_size())
-    print("Sample factor = " + str(sample_factor))
-
-    diff = np.subtract(problem.solved_matrix, approx)
-    error = problem.get_relative_error(approx)
-    best_error = problem.get_best_possible_error(rank)
-
 

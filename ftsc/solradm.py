@@ -4,19 +4,64 @@
 from scipy import linalg
 import numpy as np
 import random as rnd
-import ftsc.cluster_problem as cp
+from ftsc.cluster_problem import ClusterProblem
 from math import sqrt, floor
 import warnings
+import logging
 
 warnings.filterwarnings('ignore')
+logger = logging.getLogger("ftsc")
 
 
-def compute_probabilities(clust_prob, rows_amount=1):
+def solradm(cp: ClusterProblem, rank, epsilon=2.0, subsampling=True, zero_diagonal=True):
+    """
+    Sample Optimal Low Rank Approximation of Distance Matrices implementation
+    @param zero_diagonal: Set the diagonal of the approximation to zeros
+    @param subsampling: Use further subsampling in the second step of SOLRADM (faster), default is True
+    @param cp: ClusterProblem, containing the data objects, a compare function and the samplable matrix
+    @param rank: The rank of the approximated matrix
+    @param epsilon: Oversample factor. With epsilon == 2.0 the algorithm uses on average 5-10 rows per rank. This number
+    of rows scales inversely with epsilon
+    @return: Approximation of rank {rank} of the distance matrix of the clusterproblem
+    """
+    if epsilon is None:
+        epsilon = 2.0
+    if cp is None:
+        logger.error("No ClusterProblem specified")
+        return None
+    if rank is None:
+        logger.error("No rank specified")
+        return None
+
+    # Estimate the column norms and build probability distribution
+    probs = compute_probabilities(cp, rows_amount=rank)
+
+    # Sample columns according to the distribution
+    if subsampling:
+        u = compute_u_subsampling(cp, probs, rank, epsilon=epsilon)
+    else:
+        u = compute_u_with_svd(cp, probs, rank, epsilon=epsilon)
+
+    # Solve the regression problem
+    v = well_balanced_regression(cp, u, epsilon=epsilon)
+
+    # Multiply the matrix U and V
+    approx = np.matmul(u, v)
+
+    # Set diagonal to zero (distance matrix)
+    if zero_diagonal:
+        np.fill_diagonal(approx, 0)
+
+    return approx
+
+
+def compute_probabilities(clust_prob: ClusterProblem, rows_amount=1):
     """
     Calculate the probabilities for the sampling algorithm by approximating the norms of the
     rows using a reference element of the matrix.
     :param cp: ClusterProblem (contains the matrix)
     :return: numepy array with probabilities (normalized already)
+    @param clust_prob:
     """
     if rows_amount is None:
         rows_amount = 1
@@ -44,10 +89,9 @@ def compute_probabilities(clust_prob, rows_amount=1):
     return result
 
 
-def compute_u_with_svd(clustp, probs, k=None, epsilon=0.05):
+def compute_u_with_svd(clustp: ClusterProblem, probs, k, epsilon=2.0):
     """
     Create a matrix U containing approximations of the top k left singular vectors
-    :param delta: Likelihood of approximation being better than the epsilon given
     :param clustp: ClusterProblem
     :param probs: Sampling probabilities (length n)
     :param k: rank of approximation
@@ -57,7 +101,7 @@ def compute_u_with_svd(clustp, probs, k=None, epsilon=0.05):
     if not k:
         k = 20
     if not epsilon:
-        epsilon = 0.05
+        epsilon = 2.0
 
     s = min(floor(10 * k / epsilon), clustp.cp_size())
     print("Sampling amount to compute column space: " + str(s))
@@ -74,17 +118,12 @@ def compute_u_with_svd(clustp, probs, k=None, epsilon=0.05):
         reduced[:, i] = clustp.sample_col(number) / sqrt(s * probs[number])
 
     left, sigmas, right = linalg.svd(reduced)
-
-    # u = np.zeros(shape=(clustp.cp_size(), k))
-    # for i in range(k):
-    #     u[:, i] = np.matmul(reduced, right[i]) * (1.0 / sigmas[i]*sigmas[i])
-    #     u[:, i] = u[:, i] / np.linalg.norm(u[:, i])
     u = left[:, 0:k]
 
     return u
 
 
-def compute_u_subsampling(clustp, probs, k=None, epsilon=0.05, debug=False):
+def compute_u_subsampling(clustp: ClusterProblem, probs, k=None, epsilon=2.0, debug=False):
     """
     Create a matrix U containing approximations of the top k left singular vectors
     :param delta: Likelihood of approximation being better than the epsilon given
@@ -97,7 +136,7 @@ def compute_u_subsampling(clustp, probs, k=None, epsilon=0.05, debug=False):
     if not k:
         k = 20
     if not epsilon:
-        epsilon = 0.05
+        epsilon = 2.0
 
     s = min(floor(10 * k / (epsilon)), clustp.cp_size())
     if debug:
@@ -144,11 +183,11 @@ def compute_u_subsampling(clustp, probs, k=None, epsilon=0.05, debug=False):
     return u
 
 
-def well_balanced_linear_regression(cp, X, epsilon=0.05, debug=False):
+def well_balanced_regression(cp: ClusterProblem, X, epsilon=2.0, debug=False):
     n = X.shape[0]
     k = X.shape[1]
 
-    indices, weights = active_sampling(cp, X, epsilon=epsilon)
+    indices, weights = active_sampling(X, epsilon=epsilon)
     indices_size = len(indices)
     sqrt_weights = np.sqrt(weights)
 
@@ -172,7 +211,7 @@ def well_balanced_linear_regression(cp, X, epsilon=0.05, debug=False):
     return v_approx
 
 
-def active_sampling(cp, X, epsilon=0.05):
+def active_sampling(X, epsilon=2.0):
     """
     Uses well balanced sampling method to pick rows from X to sample
     :param cp: Cluster problem
@@ -183,11 +222,9 @@ def active_sampling(cp, X, epsilon=0.05):
     n = X.shape[0]
     k = X.shape[1]
     if epsilon is None:
-        epsilon = 0.05
+        epsilon = 2.0
 
     basis = find_orthonormal_basis(k, X)
-    # basis_test = find_orthonormal_basis(k, X, given=basis)
-    # basis = make_normal_indentity(k, X)
 
     possible_indices = np.arange(0, n)
     indices = []
@@ -199,7 +236,6 @@ def active_sampling(cp, X, epsilon=0.05):
     B = np.zeros((k, k))
     l = -2.0 * k / gamma
     u = 2.0 * k / gamma
-    D_new = np.zeros(n)
     threshold = 8.0 * k / gamma
 
     alpha_coefs = []
@@ -224,7 +260,6 @@ def active_sampling(cp, X, epsilon=0.05):
 
         sampled_index = np.random.choice(possible_indices, p=(D_new / norm))
         indices.append(sampled_index)
-        sample = X[sampled_index]
 
         scale = (gamma) / (D_new[sampled_index])
         weights.append(scale / mid)
@@ -235,34 +270,6 @@ def active_sampling(cp, X, epsilon=0.05):
         j += 1
 
     return indices, np.array(weights)
-
-
-def fix_diagonal(approximation):
-    """
-    Set all the diagonal elements to 0.0 (distance matrix)
-    :param approximation: Matrix
-    :return: Matrix with only 0.0 on diagonal
-    """
-    size = approximation.shape[0]
-    for i in range(size):
-        approximation[i, i] = 0.0
-    return approximation
-
-
-def solrad(cp, rank, epsilon=0.05, debug=False):
-    if epsilon is None:
-        epsilon = 0.05
-
-    # Three steps of SOLRADM algorithm
-    probs = compute_probabilities(cp, rows_amount=rank)
-    # u = compute_u_with_svd(cp, probs, k=rank, epsilon=epsilon)
-    u = compute_u_subsampling(cp, probs, k=rank, epsilon=epsilon, debug=debug)
-    x = well_balanced_linear_regression(cp, u, epsilon=epsilon, debug=debug)
-
-    # Compute the low rank approximation
-    approx = np.matmul(u, x)
-    np.fill_diagonal(approx, 0)
-    return approx
 
 
 def find_orthonormal_basis(dimension, X, given=None):
@@ -307,61 +314,3 @@ def get_row_probabilities(matrix):
         probabilities[i] = norm * norm
     probabilities = probabilities / np.sum(probabilities)
     return probabilities
-
-
-if __name__ == "__main__":
-    import data_loader as dl
-    from dtaidistance import dtw
-    from msm import msm_fast
-    from singular_values import calculate_best_relative_error_rank
-    from aca import make_symmetrical
-
-    """
-    Start testing
-    """
-    data_name = "Crop"
-    rank = 50
-    epsilon = 2.0
-    func_name = "dtw"
-    debug = True
-    start_index = None
-
-    names = dl.get_all_dataset_names()
-    size = len(names)
-    index = 0
-    try:
-        errors = np.load("results/all_sets_solrad_" + str(func_name) + "_" + str(epsilon) + "_errors.npy")
-        percs = np.load("results/all_sets_solrad_" + str(func_name) + "_" + str(epsilon) + "_percs.npy")
-    except:
-        errors = np.zeros(size)
-        percs = np.zeros(size)
-
-    sample_factors = np.zeros(size)
-    for i in range(index, size):
-        data_name = names[i]
-        print("TESTING DATASET: " + data_name)
-        # Read data from csv
-        my_data = dl.read_train_and_test_data(data_name, debug=debug)
-        print("Size: " + str(len(my_data)))
-
-        solved_matrix = dl.load_array(data_name, func_name)
-
-        # Create the problem class with internally the samplable matrix
-        problem = cp.ClusterProblem(my_data, dtw.distance_fast, solved_matrix=solved_matrix)
-
-        approx = solrad(problem, rank, epsilon=epsilon, debug=debug)
-
-        percs[i] = problem.percentage_sampled()
-        print("Percentage sampled = " + str(percs[i]))
-
-        sample_factors[i] = percs[i] * problem.get_max_sample_amount() / problem.cp_size()
-        print("Sample factor = " + str(sample_factors[i]))
-
-        errors[i] = problem.get_relative_error(approx)
-        print("Error = " + str(errors[i]))
-
-        print(" & " + str(round(errors[i], 4)) + " & " + str(round(100 * percs[i], 2)) + " & " + str(
-            round(sample_factors[i], 1)))
-
-        np.save("results/all_sets_solrad_" + str(func_name) + "_" + str(epsilon) + "_percs", percs)
-        np.save("results/all_sets_solrad_" + str(func_name) + "_" + str(epsilon) + "_errors", errors)
