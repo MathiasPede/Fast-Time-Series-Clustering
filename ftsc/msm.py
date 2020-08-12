@@ -114,10 +114,19 @@ def msm_matrix(series, args, block=None, parallel=True):
         logger.error("C library missing, using Python instead")
         return msm_matrix_py(series, penalty=penalty)
 
-    return msm_matrix_fast(series, penalty=penalty, block=block, parallel=parallel)
+    if 'block' in args:
+        block = args['block']
+    else:
+        block= None
+    if 'compact' in args:
+        compact = args['compact']
+    else:
+        compact = False
+
+    return msm_matrix_fast(series, penalty=penalty, block=block, compact=compact, parallel=parallel)
 
 
-def msm_matrix_fast(s, penalty=0.1, block=None, parallel=True):
+def msm_matrix_fast(s, penalty=0.1, block=None, parallel=True, compact=False):
     """Fast C version of MSM distance_matrix`."""
     if msm_c is None:
         _print_library_missing()
@@ -133,6 +142,9 @@ def msm_matrix_fast(s, penalty=0.1, block=None, parallel=True):
 
     exp_length = _distance_matrix_length(block, len(s))
     assert len(dists) == exp_length, "len(dists)={} != {}".format(len(dists), exp_length)
+
+    if compact:
+        return dists
 
     # Create full matrix and fill upper triangular matrix with distance values (or only block if specified)
     dists_matrix = distances_array_to_matrix(dists, nb_series=len(s), block=block)

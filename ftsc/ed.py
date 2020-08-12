@@ -43,6 +43,15 @@ def ed(s1, s2, args: dict):
         logger.error("C library missing, using Python instead")
         return ed_py(s1, s2)
 
+    if 'block' in args:
+        block = args['block']
+    else:
+        block= None
+    if 'compact' in args:
+        compact = args['compact']
+    else:
+        compact = False
+
     return ed_fast(s1, s2)
 
 
@@ -80,10 +89,19 @@ def ed_matrix(series, args, block=None, parallel=True):
         logger.error("C library missing, using Python instead")
         return ed_matrix_py(series)
 
-    return ed_matrix_fast(series, block=block, parallel=parallel)
+    if 'block' in args:
+        block = args['block']
+    else:
+        block= None
+    if 'compact' in args:
+        compact = args['compact']
+    else:
+        compact = False
+
+    return ed_matrix_fast(series, block=block, compact=compact, parallel=parallel)
 
 
-def ed_matrix_fast(s, block=None, parallel=True):
+def ed_matrix_fast(s, block=None, parallel=True, compact=False):
     """Fast C version of :meth:`distance_matrix`."""
     if ed_c is None:
         _print_library_missing()
@@ -96,6 +114,9 @@ def ed_matrix_fast(s, block=None, parallel=True):
 
     exp_length = _distance_matrix_length(block, len(s))
     assert len(dists) == exp_length, "len(dists)={} != {}".format(len(dists), exp_length)
+
+    if compact:
+        return dists
 
     # Create full matrix and fill upper triangular matrix with distance values (or only block if specified)
     dists_matrix = distances_array_to_matrix(dists, nb_series=len(s), block=block)

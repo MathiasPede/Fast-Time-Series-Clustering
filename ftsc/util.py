@@ -110,3 +110,10 @@ def _distance_matrix_length(block, nb_series):
 def _print_library_missing(raise_exception=True):
     msg = "The compiled C library is not available.\n"
     logger.error(msg)
+
+
+def fill_matrix(matrix):
+    # set every column equal to rows (IN ORDER)
+    for i in range(len(matrix)):
+        matrix[:, i] = matrix[i, :]
+    np.fill_diagonal(matrix, 0)

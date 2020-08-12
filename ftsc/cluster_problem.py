@@ -9,7 +9,7 @@
 import numpy as np
 import math
 from .util import low_rank_approx
-from .distance_functions import compute_distance
+from .distance_functions import compute_distance, compute_row
 
 
 class ClusterProblem:
@@ -66,21 +66,25 @@ class ClusterProblem:
             values[i] = self.sample(indices[i][0], indices[i][1])
         return values
 
-    def sample_row(self, row):
+    def sample_row(self, row_index):
         if self.solved_matrix is not None:
-            self.matrix[row, :] = self.solved_matrix[row, :]
+            self.matrix[row_index, :] = self.solved_matrix[row_index, :]
         else:
-            for i in range(self.cp_size()):
-                self.sample(row, i)
-        return self.matrix[row, :]
+            if np.isnan(self.matrix[row_index, :]).any():
+                row = compute_row(self.series[:,1:], row_index, self.compare, self.compare_args)
+                self.matrix[row_index, :] = row
+                self.matrix[:, row_index] = row
+        return self.matrix[row_index, :]
 
-    def sample_col(self, col):
+    def sample_col(self, col_index):
         if self.solved_matrix is not None:
-            self.matrix[:, col] = self.solved_matrix[:, col]
+            self.matrix[:, col_index] = self.solved_matrix[:, col_index]
         else:
-            for i in range(self.cp_size()):
-                self.sample(i, col)
-        return self.matrix[:, col]
+            if np.isnan(self.matrix[col_index, :]).any():
+                row = compute_row(self.series[:,1:], col_index, self.compare, self.compare_args)
+                self.matrix[col_index, :] = row
+                self.matrix[:, col_index] = row
+        return self.matrix[:, col_index]
 
     def sample_full_matrix(self):
         if self.solved_matrix is None:

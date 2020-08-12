@@ -138,7 +138,6 @@ def distance_matrix_nogil(cur, double penalty=0,block=None,
         block_re = block[0][1]
         block_cb = block[1][0]
         block_ce = block[1][1]
-        # TODO: replace by formula?
         for ri in range(block_rb, block_re):
             if block_cb <= ri:
                 if block_ce > ri:
@@ -152,10 +151,8 @@ def distance_matrix_nogil(cur, double penalty=0,block=None,
 
     dists_py = np.full((length,), large_value, dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=1, mode="c"] dists = dists_py
-    #print('dists: {}, {}'.format(dists_py.shape, dists_py.shape[0]*dists_py.shape[1]))
     cdef double **cur2 = <double **> malloc(len(cur) * sizeof(double*))
     cdef int *cur2_len = <int *> malloc(len(cur) * sizeof(int))
-    # cdef long ptr;
     cdef intptr_t ptr
     cdef np.ndarray[DTYPE_t, ndim=2, mode="c"] cur_np;
 
@@ -240,7 +237,6 @@ cdef distance_matrix_nogil_c_p(double **cur, int len_cur, int* cur_len, double* 
                 if block_ce > ri:
                     llength += (block_ce - block_cb)
     length = llength
-    print(length, llength)
     if length < 0:
         print("ERROR: Length of array needed to represent the distance matrix larger than maximal value for Py_ssize_t")
         return

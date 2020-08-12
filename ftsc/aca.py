@@ -71,6 +71,7 @@ def aca_symmetric_body(cp, max_rank=None, tolerance=0.05, start_index=None, iter
     max_residu = 0.0
     deleted_indices = np.array([], dtype=int)
     restartable_samples = sample_values
+    restartable_indices = sample_indices
 
     while m < max_rank - 1 and not stopcrit:
         logger.debug("Iteration " + str(m) + " New pivot: " + str(pivot_index))
@@ -79,7 +80,7 @@ def aca_symmetric_body(cp, max_rank=None, tolerance=0.05, start_index=None, iter
         # Calculate the current approximation for row of pivot
         approx = np.zeros(cp.cp_size())
         for i in range(m):
-            approx = np.add(approx, rows[i, :] * rows[i][pivot_index] * (1.0 / deltas[i]))
+            approx = np.add(approx, rows[i] * rows[i][pivot_index] * (1.0 / deltas[i]))
 
         # Find new w vector
         new_row = np.subtract(cp.sample_row(pivot_index), approx)
@@ -92,8 +93,8 @@ def aca_symmetric_body(cp, max_rank=None, tolerance=0.05, start_index=None, iter
             new_max = np.max(np.abs(new_row))
             # If the maximum is also 0 (row is perfectly approximated) take a new pivot from the samples
             if new_max == 0.0:
-                index_sample_max = np.where(np.abs(restartable_samples[:, 2]) == max_residu)[0][0]
-                pivot_index = int(restartable_samples[index_sample_max][0] + 0.00001)
+                index_sample_max = np.where(np.abs(restartable_samples) == max_residu)[0][0]
+                pivot_index = restartable_indices[index_sample_max][0]
                 continue
             new_delta = new_max
 
@@ -130,12 +131,13 @@ def aca_symmetric_body(cp, max_rank=None, tolerance=0.05, start_index=None, iter
         else:
             deleted_indices = np.concatenate((deleted_indices, pivot_indices_in_samples), axis=0)
         restartable_samples = np.delete(sample_values, deleted_indices, axis=0)
+        restartable_indices = np.delete(sample_indices, deleted_indices, axis=0)
 
         # Find the maximum error on the samples
         if restartable_samples.size == 0:
             max_residu = 0
         else:
-            max_residu = np.max(np.abs(restartable_samples[:, 2]))
+            max_residu = np.max(np.abs(restartable_samples))
 
         # Choose a new pivot
         new_row_abs = np.abs(new_row)
@@ -146,8 +148,8 @@ def aca_symmetric_body(cp, max_rank=None, tolerance=0.05, start_index=None, iter
         # Check whether the max of the row is smaller than the max residu from the samples, if so, switch
         if abs(new_max) < max_residu - 0.001:
             # Switch to the pivot to the sample with the largest remaining value
-            index_sample_max = np.where(np.abs(restartable_samples[:, 2]) == max_residu)[0][0]
-            pivot_index = int(restartable_samples[index_sample_max][0] + 0.00001)
+            index_sample_max = np.where(np.abs(restartable_samples) == max_residu)[0][0]
+            pivot_index = restartable_indices[index_sample_max][0]
 
         m += 1
 
@@ -206,7 +208,7 @@ def generate_samples_student_distribution(cp, error_margin=0.01):
             break
 
         # Calculate the new current error margin
-        squared = np.square(sample_values[:, 2])
+        squared = np.square(sample_values)
         average_so_far = np.mean(squared)
         std_so_far = np.std(squared)
         tolerance = (t * std_so_far) / (sqrt(amount_sampled) * average_so_far)
