@@ -4,13 +4,9 @@
 from scipy import linalg
 import numpy as np
 import random as rnd
-import csv
-import cluster_problem as cp
-import distance_functions as df
-from numpy import genfromtxt
-from math import sqrt, floor, log
+import ftsc.cluster_problem as cp
+from math import sqrt, floor
 import warnings
-import best_low_rank_approximation as BLRA
 
 warnings.filterwarnings('ignore')
 
@@ -27,7 +23,6 @@ def compute_probabilities(clust_prob, rows_amount=1):
 
     # Initialize list of probabilities
     size = clust_prob.cp_size()
-    arr = np.zeros(size)
 
     best_norm = np.infty
     best_row = None
@@ -48,6 +43,7 @@ def compute_probabilities(clust_prob, rows_amount=1):
 
     return result
 
+
 def compute_u_with_svd(clustp, probs, k=None, epsilon=0.05):
     """
     Create a matrix U containing approximations of the top k left singular vectors
@@ -63,7 +59,7 @@ def compute_u_with_svd(clustp, probs, k=None, epsilon=0.05):
     if not epsilon:
         epsilon = 0.05
 
-    s = min(floor(10*k / epsilon), clustp.cp_size())
+    s = min(floor(10 * k / epsilon), clustp.cp_size())
     print("Sampling amount to compute column space: " + str(s))
 
     reduced = np.zeros(shape=(clustp.cp_size(), s))
@@ -103,7 +99,7 @@ def compute_u_subsampling(clustp, probs, k=None, epsilon=0.05, debug=False):
     if not epsilon:
         epsilon = 0.05
 
-    s = min(floor(10*k / (epsilon)), clustp.cp_size())
+    s = min(floor(10 * k / (epsilon)), clustp.cp_size())
     if debug:
         print("Sampling amount to compute column space: " + str(s))
 
@@ -127,7 +123,7 @@ def compute_u_subsampling(clustp, probs, k=None, epsilon=0.05, debug=False):
     row_probs_normalized = row_probs / np.sum(row_probs)
 
     # Sample the rows of the reduced matrix
-    w_matrix = np.zeros(shape=(s,s))
+    w_matrix = np.zeros(shape=(s, s))
     row_indices = []
     for i in range(s):
         number = np.random.choice(np.arange(0, clustp.cp_size()), p=row_probs_normalized)
@@ -190,23 +186,23 @@ def active_sampling(cp, X, epsilon=0.05):
         epsilon = 0.05
 
     basis = find_orthonormal_basis(k, X)
-    #basis_test = find_orthonormal_basis(k, X, given=basis)
-    #basis = make_normal_indentity(k, X)
+    # basis_test = find_orthonormal_basis(k, X, given=basis)
+    # basis = make_normal_indentity(k, X)
 
     possible_indices = np.arange(0, n)
     indices = []
     weights = []
 
-    gamma = sqrt(epsilon)/3.0
-    mid = (4.0 * k / gamma) / ((1.0/(1.0-gamma)) - (1.0/ (1.0+gamma)))
+    gamma = sqrt(epsilon) / 3.0
+    mid = (4.0 * k / gamma) / ((1.0 / (1.0 - gamma)) - (1.0 / (1.0 + gamma)))
     j = 0
-    B = np.zeros((k,k))
+    B = np.zeros((k, k))
     l = -2.0 * k / gamma
     u = 2.0 * k / gamma
     D_new = np.zeros(n)
     threshold = 8.0 * k / gamma
 
-    alpha_coefs =  []
+    alpha_coefs = []
     v_matrix = np.matmul(X, basis)
 
     while u - l < threshold or j == n:
@@ -218,9 +214,9 @@ def active_sampling(cp, X, epsilon=0.05):
         phi = np.trace(inverse_upper) + np.trace(inverse_lower)
         alpha_coefs.append(gamma / (phi * mid))
 
-        factors1_temp = np.matmul(inverse_upper,np.transpose(v_matrix))
+        factors1_temp = np.matmul(inverse_upper, np.transpose(v_matrix))
         factors1 = np.einsum("ij,ij->i", v_matrix, np.transpose(factors1_temp))
-        factors2_temp = np.matmul(inverse_lower,np.transpose(v_matrix))
+        factors2_temp = np.matmul(inverse_lower, np.transpose(v_matrix))
         factors2 = np.einsum("ij,ij->i", v_matrix, np.transpose(factors2_temp))
 
         D_new = np.add(factors1, factors2)
@@ -259,7 +255,7 @@ def solrad(cp, rank, epsilon=0.05, debug=False):
 
     # Three steps of SOLRADM algorithm
     probs = compute_probabilities(cp, rows_amount=rank)
-    #u = compute_u_with_svd(cp, probs, k=rank, epsilon=epsilon)
+    # u = compute_u_with_svd(cp, probs, k=rank, epsilon=epsilon)
     u = compute_u_subsampling(cp, probs, k=rank, epsilon=epsilon, debug=debug)
     x = well_balanced_linear_regression(cp, u, epsilon=epsilon, debug=debug)
 
@@ -267,6 +263,7 @@ def solrad(cp, rank, epsilon=0.05, debug=False):
     approx = np.matmul(u, x)
     np.fill_diagonal(approx, 0)
     return approx
+
 
 def find_orthonormal_basis(dimension, X, given=None):
     if given is None:
@@ -276,17 +273,17 @@ def find_orthonormal_basis(dimension, X, given=None):
     for i in range(dimension):
         products = np.zeros(dimension)
         for j in range(i):
-            products[j] = get_inner_product(basis[:,j], basis[:,i], X)
+            products[j] = get_inner_product(basis[:, j], basis[:, i], X)
         correction = np.dot(basis, products)
-        orthogonal = basis[:,i] - correction
-        basis[:,i] = normalize_on_distribution(orthogonal, X)
+        orthogonal = basis[:, i] - correction
+        basis[:, i] = normalize_on_distribution(orthogonal, X)
     return basis
 
 
 def make_normal_indentity(dimension, X):
     basis = np.identity(dimension)
     for i in range(dimension):
-        basis[:,i] = normalize_on_distribution(basis[:,i], X)
+        basis[:, i] = normalize_on_distribution(basis[:, i], X)
     return basis
 
 
@@ -318,6 +315,7 @@ if __name__ == "__main__":
     from msm import msm_fast
     from singular_values import calculate_best_relative_error_rank
     from aca import make_symmetrical
+
     """
     Start testing
     """
@@ -367,4 +365,3 @@ if __name__ == "__main__":
 
         np.save("results/all_sets_solrad_" + str(func_name) + "_" + str(epsilon) + "_percs", percs)
         np.save("results/all_sets_solrad_" + str(func_name) + "_" + str(epsilon) + "_errors", errors)
-

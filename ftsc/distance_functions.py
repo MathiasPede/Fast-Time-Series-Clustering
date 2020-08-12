@@ -38,11 +38,15 @@ functions = {
 }
 
 
-def compute_distance(s1, s2, func, args: dict):
+def compute_distance(s1, s2, func, args):
+    if args is None:
+        args={}
     compare = functions[func][0]
     return compare(s1, s2, args)
 
 
-def compute_distance_matrix(series, func, args: dict):
+def compute_distance_matrix(series, func, args):
+    if args is None:
+        args={}
     compare = functions[func][0]
     return compare(series, args)

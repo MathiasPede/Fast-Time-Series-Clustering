@@ -2,8 +2,8 @@
 TRIANGLE FIXING TO FIND THE NEAREST MATRIX THAT HAS THE TRIANGLE INEQUALITY PROPERTY
 """
 import numpy as np
-import random as rnd
-from helper import distances_array_to_matrix_with_diagonal, distances_matrix_to_array_with_diagonal, _print_library_missing
+from .util import distances_array_to_matrix_with_diagonal, distances_matrix_to_array_with_diagonal, \
+    _print_library_missing
 
 triangle_fixing_c = None
 try:
@@ -13,12 +13,35 @@ except ImportError:
     triangle_fixing_c = None
 
 
+def distance_to_metric_space(matrix):
+    """
+    Calculate a 'distance' to the metric space matrices by finding the closest matrix in this space
+    @param matrix: The matrix not in the metric space
+    @return: Relative error to the metric space
+    """
+    triangle_fixed = triangle_fixing(matrix)
+    diff = matrix - triangle_fixed
+    frob_norm = np.linalg.norm(matrix)
+    diff_norm = np.linalg.norm(diff)
+    relative_error = diff_norm / frob_norm
+    return relative_error
+
+
+def triangle_fixing(matrix, violation_margin=0.01):
+    if violation_margin is None:
+        violation_margin = 0.01
+    if triangle_fixing_c is None:
+        _print_library_missing()
+        return triangle_fixing_py(matrix, violation_margin=violation_margin)
+    return triangle_fixing_fast(matrix, violation_margin=violation_margin)
+
+
 def triangle_fixing_fast(matrix, violation_margin=0.01):
     if triangle_fixing_c is None:
         _print_library_missing()
         return None
     if violation_margin is None:
-        violation_margin=0.01
+        violation_margin = 0.01
 
     flat = distances_matrix_to_array_with_diagonal(matrix)
 
@@ -34,7 +57,7 @@ def get_number_of_violations_fast(matrix, violation_margin=0.01):
         _print_library_missing()
         return None
     if violation_margin is None:
-        violation_margin=0.01
+        violation_margin = 0.01
 
     flat = distances_matrix_to_array_with_diagonal(matrix)
 
@@ -47,18 +70,18 @@ class SymmetricMatrix:
     def __init__(self, size, dtype=float):
         self.size = size
         self.dtype = dtype
-        self.array = np.zeros(((size+1)*size) // 2, dtype=self.dtype)
+        self.array = np.zeros(((size + 1) * size) // 2, dtype=self.dtype)
 
     def set(self, i, j, value):
         if j > i:
             i, j = j, i
-        index = (((2*self.size - i + 1) * i) // 2) + (j-i)
+        index = (((2 * self.size - i + 1) * i) // 2) + (j - i)
         self.array[index] = value
 
     def get(self, i, j):
         if j > i:
             i, j = j, i
-        index = (((2*self.size - i + 1) * i) // 2) + (j-i)
+        index = (((2 * self.size - i + 1) * i) // 2) + (j - i)
         return self.array[index]
 
     def to_matrix(self):
@@ -73,21 +96,21 @@ class UpperTriangleOfArrays:
     def __init__(self, size, array_size):
         self.size = size
         self.array_size = array_size
-        flat_size = ((size+1)*size) // 2
+        flat_size = ((size + 1) * size) // 2
         self.array = np.zeros((flat_size, array_size))
 
     def set(self, i, j, k, value):
         assert i <= j
-        index = (((2*self.size - i + 1) * i) // 2) + (j-i)
+        index = (((2 * self.size - i + 1) * i) // 2) + (j - i)
         self.array[index, k] = value
 
     def get(self, i, j, k):
         assert i <= j
-        index = (((2*self.size - i + 1) * i) // 2) + (j-i)
+        index = (((2 * self.size - i + 1) * i) // 2) + (j - i)
         return self.array[index, k]
 
 
-def triangle_fixing(matrix, violation_margin=0.01, tolerance=0.01):
+def triangle_fixing_py(matrix, violation_margin=0.01, tolerance=0.01):
     # Initialize error and correction matrix
     size = len(matrix)
     errors = SymmetricMatrix(size)
@@ -98,10 +121,10 @@ def triangle_fixing(matrix, violation_margin=0.01, tolerance=0.01):
     # start = 0
     violations = size
 
-    while violations > tolerance*size:
+    while violations > tolerance * size:
         violations = 0
         for i in range(size):
-            for j in range(i+1, size):
+            for j in range(i + 1, size):
                 for k in range(size):
                     if i == k or j == k:
                         continue
@@ -112,7 +135,7 @@ def triangle_fixing(matrix, violation_margin=0.01, tolerance=0.01):
                     ejk = errors.get(j, k)
                     eki = errors.get(k, i)
 
-                    mu = (1.0/3.0) * (eij - ejk - eki - b)
+                    mu = (1.0 / 3.0) * (eij - ejk - eki - b)
 
                     if mu > 0:
                         if mu > violation_margin:
@@ -138,38 +161,3 @@ def triangle_fixing(matrix, violation_margin=0.01, tolerance=0.01):
 
     error_matrix = errors.to_matrix()
     return np.add(matrix, error_matrix)
-
-
-if __name__ == '__main__':
-    import data_loader as dl
-
-    datasets = dl.get_all_dataset_names()
-    size = len(datasets)
-    relative_errors = np.zeros(size)
-    indices = [8,9,10,13,17,18,19,20,21,23,24,26,27,28,29,33,37,38,42,44,45,46,47,48,49,52,53,60,64,65,66,67,68,73,74,76,78,81]
-    # for i in range(size):
-    #     name = datasets[i]
-    #     data = dl.read_train_and_test_data(name, debug=False)
-    #     if len(data) > 1500:
-    #         print("Too large: " + name)
-    #         continue
-    #     matrix = dl.compute_distance_matrix_dtw(data, name)
-    #     frob_norm = np.linalg.norm(matrix)
-    #
-    #     fixed = triangle_fixing_fast(matrix, violation_margin=0.01)
-    #     diff = np.subtract(matrix, fixed)
-    #     diff_norm = np.linalg.norm(diff)
-    #
-    #     relative_errors[i] = diff_norm / frob_norm
-    #
-    relative_errors = np.take(np.load("results/triangle_relative_errors.npy"), indices)
-    #
-    # matrix = dl.load_array("CinCECGTorso", "dtw")
-    # #fixed1 = triangle_fixing(matrix, violation_margin=0.01, tolerance=0.01)
-    # fixed2 = triangle_fixing_fast(matrix, violation_margin=0.01, tolerance=0.01)
-    #
-    # #diff1 = np.subtract(matrix, fixed1)
-    # diff2 = np.subtract(matrix, fixed2)
-    #
-    # #norm1 = np.linalg.norm(diff1)
-    # norm2 = np.linalg.norm(diff2)

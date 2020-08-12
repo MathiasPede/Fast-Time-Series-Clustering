@@ -6,6 +6,12 @@ logger = logging.getLogger("ftsc")
 
 
 def load_timeseries_from_tsv(path):
+    """
+    Loads Time Series from TSV file. The Format is expected to be the Class number as first element of the row,
+    followed by the the elements of the time series.
+    @param path:
+    @return:
+    """
     logger.debug("Loading data from: " + path)
     data = np.genfromtxt(path, delimiter='\t')
     logger.debug("Loaded " + str(len(data)) + " data entries")

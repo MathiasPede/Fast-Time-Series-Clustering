@@ -9,10 +9,11 @@
 import numpy as np
 import math
 from .util import low_rank_approx
+from .distance_functions import compute_distance
 
 
 class ClusterProblem:
-    def __init__(self, series, compare, compare_args={}, start_index=1, solved_matrix=None):
+    def __init__(self, series, compare, compare_args=None, start_index=1, solved_matrix=None):
         """
         Creates a cluster problem objects, which contains the data objects. A distance matrix is created with initially
         NaN values and entries can be computed based on index using the 'compare' function
@@ -53,7 +54,8 @@ class ClusterProblem:
             if self.solved_matrix is not None:
                 value = self.solved_matrix[x][y]
             else:
-                value = self.compare(self.get_time_serie(x), self.get_time_serie(y), self.compare_args)
+                value = compute_distance(self.get_time_serie(x), self.get_time_serie(y),
+                                         self.compare, self.compare_args)
             self.write(x, y, value)
         return value
 
@@ -91,7 +93,7 @@ class ClusterProblem:
     def sample_diagonal(self):
         diagonal = np.zeros(self.cp_size())
         for i in range(self.cp_size()):
-            diagonal[i] = self.sample(i,i)
+            diagonal[i] = self.sample(i, i)
         return diagonal
 
     def compute_omega(self):
@@ -118,7 +120,7 @@ class ClusterProblem:
         # count non nan numbers on diagonal
         diag_number = 0
         for i in range(self.cp_size()):
-            if not np.isnan(self.matrix[i,i]):
+            if not np.isnan(self.matrix[i, i]):
                 diag_number += 1
         # count all non nan numbers
         non_nan_numbers = np.count_nonzero(~np.isnan(self.matrix))
