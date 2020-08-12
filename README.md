@@ -14,7 +14,7 @@ to the DTW implementation of dtaidistance.
 This library is currently only offered in source code. To offer the full speed of the C version
 the following command should be used to compile the Cython files.
 
-  $ python setup.py build_ext --inplace
+    $ python setup.py build_ext --inplace
 
 ## Usage
 
