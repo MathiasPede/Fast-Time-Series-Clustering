@@ -73,7 +73,7 @@ def aca_symmetric_body(cp, max_rank=None, tolerance=0.05, start_index=None, iter
     restartable_samples = sample_values
     restartable_indices = sample_indices
 
-    while m < max_rank - 1 and not stopcrit:
+    while m < max_rank and not stopcrit:
         logger.debug("Iteration " + str(m) + " New pivot: " + str(pivot_index))
         logger.debug("The indices so far: " + str(indices))
 

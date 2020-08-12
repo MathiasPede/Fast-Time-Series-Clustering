@@ -1,8 +1,18 @@
-from data_loader import load_array, compute_distance_matrix, get_all_dataset_names, save_array
-from plotter import scatter_plot, multiple_scatter_plot
 import numpy as np
-from math import sqrt, floor
-from singular_values import get_singular_values, calculate_best_relative_error_for_all_ranks
+
+from math import floor
+from ftsc.singular_values import calculate_best_relative_error_for_all_ranks, calculate_best_relative_error_rank
+from tests.plotting_utils import scatter_plot, multiple_scatter_plot
+from tests.tests_utils import load_singular_values, create_cluster_problem, get_all_test_dataset_names
+
+
+def get_singular_values(data_name, func_name):
+    # If stored in memory
+    sing_vals = load_singular_values(data_name, func_name)
+    if sing_vals is None:
+        cp = create_cluster_problem(data_name, func_name)
+        sing_vals = cp.get_singular_values()
+    return sing_vals
 
 
 def run_best_error_plot(data_name, max=None):
@@ -31,61 +41,27 @@ def run_singular_values_plot(data_name, func_name):
     scatter_plot(sing_vals[0:max], xas, yname="Singuliere waarden", xname="Index", title="Singuliere waarden van" + func_name + " matrix " + data_name)
 
 
-def get_least_rank_for_error(data_name, func_name, error):
-    sing_vals = get_singular_values(data_name, func_name)
-    errors = calculate_best_relative_error_for_all_ranks(sing_vals)
-    rank = np.where(errors <= error)
-    try:
-        return rank[0][0]
-    except IndexError:
-        return len(sing_vals)
+func_name = "dtw"
+
+# Singular values and errors for 1 dataset
+name = "ECG5000"
+run_singular_values_plot(name, func_name)
+run_best_error_plot(name)
 
 
-def get_percentage_least_rank(data_name, func_name, error):
-    sing_vals = get_singular_values(data_name, func_name)
-    errors = calculate_best_relative_error_for_all_ranks(sing_vals)
-    rank = np.where(errors <= error)
-    try:
-        return float(rank[0][0]) / float(len(sing_vals))
-    except IndexError:
-        return 1
+# Compare all dataset error for certain ranks
+all_datasets = get_all_test_dataset_names()
+size = len(all_datasets)
+ranks = [5, 10, 20, 50, 100]
 
+errors = np.zeros(shape=(size, len(ranks)))
 
-if __name__ == '__main__':
-    datasets = get_all_dataset_names()
-    dtw_ranks = []
-    msm_ranks = []
-    max_error = 0.005
+for i in range(size):
+    name = all_datasets[i]
+    sing_vals = get_singular_values(name, func_name)
+    for j in range(len(ranks)):
+        errors[i,j] = calculate_best_relative_error_rank(sing_vals, ranks[j])
 
-    for name in datasets:
-        name= "ECG5000"
-        run_singular_values_plot(name, "dtw")
-        run_best_error_plot(name)
-
-        rank_dtw = get_percentage_least_rank(name, "dtw", max_error)
-        dtw_ranks.append(rank_dtw)
-        rank_msm = get_percentage_least_rank(name, "msm", max_error)
-        msm_ranks.append(rank_msm)
-
-    difference = np.subtract(msm_ranks, dtw_ranks)
-
-    dtw_average = sum(dtw_ranks) / len(dtw_ranks)
-    msm_average = sum(msm_ranks) / len(msm_ranks)
-
-    difference_average = sum(difference) / len(difference)
-
-    dtw_better = sum(x > 0 for x in difference)
-    dtw_better_percentage = dtw_better / float(len(difference))
-    same = sum(x == 0 for x in difference)
-    same_percentage = same / float(len(difference))
-    msm_better = sum(x < 0 for x in difference)
-    msm_percentage = msm_better / float(len(difference))
-
-    dtw_std = sqrt(np.var(dtw_ranks))
-    msm_std = sqrt(np.var(msm_ranks))
-
-    #difference_std = sqrt(np.var(difference))
-
-    print("AVERAGE: " + str(dtw_average) + " vs " + str(msm_average))
-    print("STD: " + str(dtw_std) + " vs " + str(msm_std))
-    print("DTW : " + str(dtw_better) + " EQUAL: " + str(same) + " MSM : " + str(msm_better))
+averages = np.average(errors, axis=0)
+stds = np.std(errors, axis=0)
+max = np.max(errors, axis=0)

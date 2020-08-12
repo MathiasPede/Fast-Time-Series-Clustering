@@ -16,3 +16,5 @@ ftsc/__pycache__/ed.cpython-38.pyc
 ftsc/__pycache__/solradm.cpython-38.pyc
 ftsc/__pycache__/msm.cpython-38.pyc
 ftsc/__pycache__/util.cpython-38.pyc
+tests/Matrix_data/*
+*.pyc

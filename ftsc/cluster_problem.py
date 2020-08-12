@@ -13,17 +13,15 @@ from .distance_functions import compute_distance, compute_row, compute_distance_
 
 
 class ClusterProblem:
-    def __init__(self, series, compare, compare_args=None, start_index=1, solved_matrix=None):
+    def __init__(self, series, compare, compare_args=None, solved_matrix=None):
         """
         Creates a cluster problem objects, which contains the data objects. A distance matrix is created with initially
         NaN values and entries can be computed based on index using the 'compare' function
         :param series: The data objects (array of time series, usually with first index the class number)
         :param compare: Distance function
-        :param start_index: Index of each object array where the time series start (usually 1, after the class nr)
         :param solved_matrix: Potentially add an already solved matrix to speed up
         """
         self.series = series
-        self.start_index = start_index
         self.compare = compare
         self.compare_args = compare_args
         self.size = len(series)
@@ -38,7 +36,7 @@ class ClusterProblem:
         return self.size
 
     def get_time_serie(self, x):
-        return self.series[x][self.start_index:]
+        return self.series[x]
 
     def read(self, x, y):
         return self.matrix[x][y]

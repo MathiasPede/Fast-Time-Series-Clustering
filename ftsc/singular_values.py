@@ -1,10 +1,8 @@
 import numpy as np
 from math import sqrt
-from data_loader import load_array
 
 
-def calculate_best_relative_error_rank(data_name, func_name, rank):
-    sing_vals = get_singular_values(data_name, func_name)
+def calculate_best_relative_error_rank(sing_vals, rank):
     if rank > len(sing_vals):
         return 0.0
     size = len(sing_vals)
@@ -21,46 +19,7 @@ def calculate_best_relative_error_for_all_ranks(sing_vals):
     return abs_error / norm
 
 
-def get_first_rank_relative_error_below(data_name, func_name, rel_error):
-    sing_vals = get_singular_values(data_name, func_name)
+def get_first_rank_relative_error_below(sing_vals, rel_error):
     rel_errors = calculate_best_relative_error_for_all_ranks(sing_vals)
     index = np.where(rel_errors < rel_error)[0][0]
     return index + 1
-
-
-def get_singular_values(data_name, func_name):
-    folder = "Singular_values/"
-    file_name = folder + "SV_" + data_name + "_" + func_name
-    try:
-        return np.load(file_name + ".npy")
-    except IOError:
-        matrix = load_array(data_name, func_name)
-        sing_vals = np.linalg.svd(matrix)[1]
-        np.save(file_name, sing_vals)
-        return sing_vals
-
-
-if __name__ == '__main__':
-    import data_loader as dl
-    from plotter import scatter_plot
-    datasets = dl.get_all_dataset_names()
-    size = len(datasets)
-
-    func_name = "dtw"
-    rank = 20
-    errors = np.zeros(size)
-
-    for i in range(size):
-        name = datasets[i]
-        errors[i] = calculate_best_relative_error_rank(name, func_name, rank)
-
-    average = np.average(errors)
-    max_error = np.max(errors)
-    std = np.std(errors)
-    print("AVERAGE: " + str(average))
-    print("MAX: " + str(max_error))
-    print("STD: " + str(std))
-    sizes = np.load("results/dataset_sizes.npy")
-    scatter_plot(errors, sizes)
-
-    np.save("results/best_errors_rank_" + str(rank), errors)
