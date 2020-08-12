@@ -41,6 +41,7 @@ l_args = {
     'mingw32': ['-fopenmp']
 }
 
+
 class MyDistribution(Distribution):
     global_options = Distribution.global_options + [
         ('noopenmp', None, 'Disable compilation with openmp')
@@ -151,11 +152,11 @@ class MyBuildExtCommand(BuildExtCommand):
         set_custom_envvars_for_homebrew()
         super().initialize_options()
 
-    # def finalize_options(self):
-    #     super().finalize_options()
+    def finalize_options(self):
+        super().finalize_options()
 
-    # def run(self):
-    #     super().run()
+    def run(self):
+        super().run()
 
 
 class MyBuildExtInPlaceCommand(MyBuildExtCommand):
@@ -195,17 +196,20 @@ def check_openmp(cc_bin):
 if cythonize is not None and numpy is not None:
     ext_modules = cythonize([
         Extension(
-            "msm_c", ["msm_c.pyx"],
+            "fasttsclustering.msm_c",
+            ["fasttsclustering/msm_c.pyx"],
             include_dirs=np_include_dirs,
             extra_compile_args=[],
             extra_link_args=[]),
         Extension(
-            "ed_c", ["ed_c.pyx"],
+            "fasttsclustering.ed_c",
+            ["fasttsclustering/ed_c.pyx"],
             include_dirs=np_include_dirs,
             extra_compile_args=[],
             extra_link_args=[]),
         Extension(
-            "triangle_fixing_c", ["triangle_fixing_c.pyx"],
+            "fasttsclustering.triangle_fixing_c",
+            ["fasttsclustering/triangle_fixing_c.pyx"],
             include_dirs=np_include_dirs,
             extra_compile_args=[],
             extra_link_args=[])
@@ -228,6 +232,7 @@ setup(
     tests_require=tests_require,
     extras_require={
         'vis': ['matplotlib']
+
     },
     include_package_data=True,
     package_data={
@@ -239,5 +244,6 @@ setup(
         'build_ext': MyBuildExtCommand,
         'install': MyInstallCommand
     },
+    license='Apache 2.0',
     ext_modules=ext_modules
 )
