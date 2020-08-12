@@ -196,20 +196,20 @@ def check_openmp(cc_bin):
 if cythonize is not None and numpy is not None:
     ext_modules = cythonize([
         Extension(
-            "fasttsclustering.msm_c",
-            ["fasttsclustering/msm_c.pyx"],
+            "ftsc.msm_c",
+            ["ftsc/msm_c.pyx"],
             include_dirs=np_include_dirs,
             extra_compile_args=[],
             extra_link_args=[]),
         Extension(
-            "fasttsclustering.ed_c",
-            ["fasttsclustering/ed_c.pyx"],
+            "ftsc.ed_c",
+            ["ftsc/ed_c.pyx"],
             include_dirs=np_include_dirs,
             extra_compile_args=[],
             extra_link_args=[]),
         Extension(
-            "fasttsclustering.triangle_fixing_c",
-            ["fasttsclustering/triangle_fixing_c.pyx"],
+            "ftsc.triangle_fixing_c",
+            ["ftsc/triangle_fixing_c.pyx"],
             include_dirs=np_include_dirs,
             extra_compile_args=[],
             extra_link_args=[])
