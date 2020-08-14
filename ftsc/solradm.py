@@ -34,7 +34,7 @@ def solradm(cp: ClusterProblem, rank, epsilon=2.0, subsampling=True, zero_diagon
         return None
 
     # Estimate the column norms and build probability distribution
-    probs = compute_probabilities(cp, rows_amount=rank)
+    probs = compute_probabilities(cp, rows_amount=10)
 
     # Sample columns according to the distribution
     if subsampling:

@@ -38,7 +38,7 @@ def run_singular_values_plot(data_name, func_name):
 
     max = floor(0.99 * len(sing_vals))
     xas = np.arange(0, max)
-    scatter_plot(sing_vals[0:max], xas, yname="Singuliere waarden", xname="Index", title="Singuliere waarden van" + func_name + " matrix " + data_name)
+    scatter_plot(sing_vals[0:max], xas, yname="Singuliere waarden", xname="Singuliere waarden gerangschikt van groot naar klein", title="Singuliere waarden van " + func_name + " matrix " + data_name)
 
 
 func_name = "dtw"
