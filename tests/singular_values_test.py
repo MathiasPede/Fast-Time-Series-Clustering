@@ -29,39 +29,41 @@ def run_best_error_plot(data_name, max=None):
     error_ed = calculate_best_relative_error_for_all_ranks(sing_vals_ed)[0:max]
 
     multiple_scatter_plot((error_dtw, error_msm, error_ed), (xas, xas, xas), colors=["blue", "red", "green"],
-                          labels=["DTW", "MSM", "ED"], xname="Rang benadering", yname="Relatieve fout",
-                          title="Beste relatieve fout voor benaderingsrang " + data_name)
+                          labels=["DTW", "MSM", "ED"], xname="Rang $k$ van de benadering",
+                          yname="Relatieve fout $\eta$",
+                          title="Beste relatieve fout voor benaderingsrang " + data_name, marker='o')
 
 
 def run_singular_values_plot(data_name, func_name):
-    sing_vals= get_singular_values(data_name, "dtw")
+    sing_vals = get_singular_values(data_name, "dtw")
 
     max = floor(0.99 * len(sing_vals))
     xas = np.arange(0, max)
-    scatter_plot(sing_vals[0:max], xas, yname="Singuliere waarden", xname="Singuliere waarden gerangschikt van groot naar klein", title="Singuliere waarden van " + func_name + " matrix " + data_name)
+    scatter_plot(sing_vals[0:max], xas, yname="Singuliere waarden $\sigma_i$", xname="Index $i$",
+                 title="Singuliere waarden van " + func_name + " matrix " + data_name, marker='o')
 
 
-func_name = "dtw"
+if __name__ == '__main__':
+    func_name = "dtw"
 
-# Singular values and errors for 1 dataset
-name = "ECG5000"
-run_singular_values_plot(name, func_name)
-run_best_error_plot(name)
+    # Singular values and errors for 1 dataset
+    name = "ECG5000"
+    run_singular_values_plot(name, func_name)
+    run_best_error_plot(name)
 
+    # Compare all dataset error for certain ranks
+    all_datasets = get_all_test_dataset_names()
+    size = len(all_datasets)
+    ranks = [5, 10, 20, 50, 100]
 
-# Compare all dataset error for certain ranks
-all_datasets = get_all_test_dataset_names()
-size = len(all_datasets)
-ranks = [5, 10, 20, 50, 100]
+    errors = np.zeros(shape=(size, len(ranks)))
 
-errors = np.zeros(shape=(size, len(ranks)))
+    for i in range(size):
+        name = all_datasets[i]
+        sing_vals = get_singular_values(name, func_name)
+        for j in range(len(ranks)):
+            errors[i, j] = calculate_best_relative_error_rank(sing_vals, ranks[j])
 
-for i in range(size):
-    name = all_datasets[i]
-    sing_vals = get_singular_values(name, func_name)
-    for j in range(len(ranks)):
-        errors[i,j] = calculate_best_relative_error_rank(sing_vals, ranks[j])
-
-averages = np.average(errors, axis=0)
-stds = np.std(errors, axis=0)
-max = np.max(errors, axis=0)
+    averages = np.average(errors, axis=0)
+    stds = np.std(errors, axis=0)
+    max = np.max(errors, axis=0)

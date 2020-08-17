@@ -1,11 +1,15 @@
-from solrad import compute_probabilities
 import numpy as np
-import cluster_problem as cp
-import scipy.stats
 import random as rnd
 
+from ftsc.solradm import compute_probabilities
+from ftsc.triangle_fixing import distance_to_metric_space
+
+from tests.tests_utils import create_cluster_problem, take_submatrix_matrix
+from tests.plotting_utils import multiple_scatter_plot, scatter_plot, text_scatter_plot
+from tests.tests_utils import get_all_test_dataset_names
 
 
+# Utils for tests
 def get_c_number(real_probs, probabilities):
     compared = np.divide(probabilities, real_probs)
     c = np.min(compared)
@@ -17,160 +21,129 @@ def get_real_probabilities(matrix):
     probabilities = np.zeros(size)
 
     for i in range(size):
-        norm = np.linalg.norm(matrix[:,i])
+        norm = np.linalg.norm(matrix[:, i])
         probabilities[i] = norm * norm
 
     probabilities = probabilities / np.sum(probabilities)
     return probabilities
 
 
-def jensen_shannon_distance(p, q):
-    """
-    method to compute the Jenson-Shannon Distance
-    between two probability distributions
-    """
-    # calculate m
-    m = (p + q) / 2
-    # compute Jensen Shannon Divergence
-    divergence = (scipy.stats.entropy(p, m) + scipy.stats.entropy(q, m)) / 2
-    # compute the Jensen Shannon Distance
-    distance = np.sqrt(divergence)
-    return distance
-
-
-def compute_probabilities(matrix):
-    """
-    Calculate the probabilities for the sampling algorithm by approximating the norms of the
-    rows using a reference element of the matrix.
-    :param cp: ClusterProblem (contains the matrix)
-    :return: numepy array with probabilities (normalized already)
-    """
-    # Initialize list of probabilities
-    size = len(matrix)
-    arr = np.zeros(size)
-    ref = rnd.randint(0, size - 1)
-
-    # Choose a random time series as reference
-    ref_row = matrix[ref]
+def compute_probabilities_with_index(matrix, index):
+    ref_row = matrix[index, :]
     squared = np.square(ref_row)
     average_distance_to_ref = np.average(squared)
     arr = squared + average_distance_to_ref
     result = arr / np.sum(arr)
-
     return result
 
 
-if __name__ == '__main__':
-    from data_loader import get_all_dataset_names, compute_distance_matrix_msm, read_train_and_test_data, compute_distance_matrix_dtw, compute_distance_matrix_ed, take_submatrix_matrix
-    from msm import msm_fast
-    from plotter import histogram_plot, scatter_plot, multiple_scatter_plot
+# TESTS
 
-    # name = "ElectricDevices"
-    # test_size = 5
-    #
-    # data = read_train_and_test_data(name)
-    # size = len(data)
-    # matrix = compute_distance_matrix_msm(data, name)
-    # cluster_problem = cp.ClusterProblem(data, msm_fast, solved_matrix=matrix)
-    #
-    # real_probs = get_real_probabilities(matrix)
-    # uniform = np.ones(size, dtype=float) / size
-    # c_numbers_uniform = np.divide(uniform, real_probs)
-    #
-    # test_cs = np.zeros(test_size, dtype=float)
-    # ref_norms = np.zeros(test_size, dtype=float)
-    #
-    # for i in range(test_size):
-    #     ref_index = rnd.randint(0, size - 1)
-    #     #norms_estimated = compute_norm_estimations(cluster_problem, ref_index)
-    #     #probs_estimated = norms_estimated / np.sum(norms_estimated)
-    #     probs_estimated = compute_probabilities(cluster_problem, rows_amount=10)
-    #     c_numbers = np.divide(probs_estimated, real_probs)
-    #     c = np.min(c_numbers)
-    #     print(c)
-    #     #test_cs[i] = c
-    #     #ref_norms[i] = np.linalg.norm(cluster_problem.sample_row(ref_index))
-    #     multiple_scatter_plot([c_numbers, c_numbers_uniform], [real_probs, real_probs], ['Schatting', 'Uniform'], yscale='linear', title="Correlatie kans schatting SOLRADM vs uniform", yname='Geschatte kans / Correcte kans', xname='Correcte kans')
+def estimate_probabilities_test(name, func_name, test_size, row_amount=1):
+    cp = create_cluster_problem(name, func_name)
+    matrix = cp.sample_full_matrix()
+    size = cp.cp_size()
 
-    #scatter_plot(test_cs, ref_norms, title="Invloed norm referentie rij op inschatting kansverdeling",
-    #             yname="c factor", xname='Norm referentie', yscale='log')
-    #average = all_probs / test_size
-    #compared = np.divide(average, real_probs)
-    #histogram_plot(real_probs)
-    #histogram_plot(compared)
-
-
-    # all_datasets = get_all_dataset_names()
-    # size = len(all_datasets)
-    # test_size = 1000
-    #
-    # results = np.zeros((size,test_size))
-    # probability_distance = np.zeros((size, test_size))
-    #
-    # for i in range(size):
-    #     name = all_datasets[i]
-    #     print("Testing dataset: " + name)
-    #
-    #     data = read_train_and_test_data(name)
-    #     matrix = compute_distance_matrix_dtw(data, name)
-    #     cluster_problem = cp.ClusterProblem(data, msm_fast, solved_matrix=matrix)
-    #
-    #     real_probs = get_real_probabilities(matrix)
-    #
-    #     for j in range(test_size):
-    #         probs_estimated = compute_probabilities(cluster_problem, rows_amount=1)
-    #         results[i,j] = get_c_number(real_probs, probs_estimated)
-    #         #probability_distance[i,j] = jensen_shannon_distance(real_probs, probs_estimated)
-    #
-    #     average = np.sum(results[i,:]) / test_size
-    #     std = np.std(results[i,:])
-    #
-    #     #average_distance = np.sum(probability_distance[i,:]) / test_size
-    #
-    #     print("AVERAGE: " + str(average))
-    #     print("STD: " + str(std))
-    #     #print('JS_Distance: ' + str(average_distance))
-    #
-    # np.save("results/norm_estimation_dtw_c_test_1_row_" + str(test_size), results)
-
-    # #np.save("results/norm_estimation_jcdistance_test_" + str(test_size), probability_distance)
-
-    # all_datasets = get_all_dataset_names()
-    # size = len(all_datasets)
-    #
-    # set_sizes = np.zeros(size)
-    #
-    # for i in range(size):
-    #     name = all_datasets[i]
-    #     data = read_train_and_test_data(name)
-    #     print(name)
-    #     set_sizes[i] = len(data)
-    #
-    #results = np.load("results/norm_estimation_dtw_c_test_10_rows_1000.npy")
-    # relative_errors = np.load("results/triangle_relative_errors.npy")
-    # indices = [9,16,17,19,21,26,27,28,29,37,42,45,46,48,49,52,53,65,74,76,81]
-    # errors_filtered = np.delete(relative_errors, indices)
-    #
-    #average = np.average(results, axis=1)
-    # average_filtered = np.delete(average, indices, axis=0)
-    #
-    # scatter_plot(average_filtered, errors_filtered, yscale='linear', marker="o", yname='c factor', xname='Afstand tot metrische afstandsmatrix', title='Impact driehoeksongelijkheid op schatting normen')
-    # scatter_plot(average, set_sizes, yscale='linear', marker="o", yname='c factor', xname='Grootte matrix', title='Impact grootte matrix op schatting normen')
-    #total_average = np.average(average)
-    #std = np.std(results, axis=0)
-    #total_std = np.average(std)
-
-    name = "Crop"
-    test_size = 250
-    data = read_train_and_test_data(name)
-    full_size = len(data)
-
-    full_matrix = compute_distance_matrix_msm(data, name)
-    sizes = np.zeros(test_size, dtype=int)
-    results = np.zeros(test_size, dtype=float)
+    real_probs = get_real_probabilities(matrix)
+    uniform = np.ones(size, dtype=float) / size
+    c_numbers_uniform = np.divide(uniform, real_probs)
 
     for i in range(test_size):
-        print("Test " + str(i))
+        probs_estimated = compute_probabilities(cp, rows_amount=row_amount)
+        c_numbers = np.divide(probs_estimated, real_probs)
+        multiple_scatter_plot([c_numbers, c_numbers_uniform], [real_probs, real_probs], ['Schatting', 'Uniform'],
+                              yscale='linear', title="Correlatie kans schatting SOLRADM vs uniform",
+                              yname='Geschatte kans / Correcte kans', xname='Correcte kans')
+
+
+def norm_reference_test(name, func_name, test_size):
+    cp = create_cluster_problem(name, func_name)
+    matrix = cp.sample_full_matrix()
+    size = cp.cp_size()
+    real_probs = get_real_probabilities(matrix)
+
+    test_cs = np.zeros(test_size, dtype=float)
+    ref_norms = np.zeros(test_size, dtype=float)
+
+    for i in range(test_size):
+        ref_index = rnd.randint(0, size)
+        probs_estimated = compute_probabilities_with_index(matrix, ref_index)
+        c_numbers = np.divide(probs_estimated, real_probs)
+        c = np.min(c_numbers)
+        test_cs[i] = c
+        ref_norms[i] = np.linalg.norm(cp.sample_row(ref_index))
+
+    scatter_plot(test_cs, ref_norms, title="Invloed norm referentie rij op inschatting kansverdeling",
+                 yname="c factor", xname='Norm referentie', yscale='log')
+
+
+def average_and_std_all_datasets_test(func_name):
+    all_datasets = get_all_test_dataset_names()
+    size = len(all_datasets)
+    test_size = 1000
+
+    all_averages = np.zeros(size)
+    all_stds = np.zeros(size)
+
+    for i in range(size):
+        name = all_datasets[i]
+        print("Testing dataset: " + name)
+
+        cp = create_cluster_problem(name, func_name)
+        matrix = cp.sample_full_matrix()
+
+        real_probs = get_real_probabilities(matrix)
+
+        results = np.zeros(test_size)
+        for j in range(test_size):
+            probs_estimated = compute_probabilities(cp, rows_amount=1)
+            results[j] = get_c_number(real_probs, probs_estimated)
+
+        all_averages[i] = np.average(results)
+        all_stds[i] = np.std(results)
+
+        print("AVERAGE: " + str(all_averages[i]))
+        print("STD: " + str(all_stds[i]))
+
+    total_average = np.average(all_averages)
+    total_std = np.average(all_stds)
+
+    print("TOTAL AVERAGE: " + str(total_average))
+    print("TOTAL STD: " + str(total_std))
+
+    return all_averages, all_stds
+
+
+def compare_average_c_factor_with_distance_to_metric_space_test(averages, max_size=1500):
+    all_datasets = get_all_test_dataset_names()
+    size = len(all_datasets)
+
+    errors = []
+    names = []
+    average_cs = []
+
+    for i in range(size):
+        name = all_datasets[i]
+        cp = create_cluster_problem(name, "dtw")
+        if cp.cp_size() < max_size:
+            matrix = cp.sample_full_matrix()
+            errors.append(distance_to_metric_space(matrix))
+            names.append(name)
+            average_cs.append(averages[i])
+
+    text_scatter_plot(average_cs, errors, yscale='linear', marker="o", yname='c factor',
+                 xname='Afstand tot metrische afstandsmatrix', title='Impact driehoeksongelijkheid op schatting normen',
+                 names=names, regression=True)
+
+
+def submatrix_test(name, func_name):
+    test_size = 250
+    cp = create_cluster_problem(name, func_name)
+    full_matrix = cp.sample_full_matrix()
+    full_size = cp.cp_size()
+    sizes = np.zeros(test_size, dtype=int)
+    results = np.zeros(test_size, dtype=float)
+    for i in range(test_size):
         sizes[i] = rnd.randint(0, full_size - 1)
         indices = rnd.sample(range(0, full_size), sizes[i])
         submatrix = take_submatrix_matrix(full_matrix, indices)
@@ -179,9 +152,24 @@ if __name__ == '__main__':
         c_numbers = np.divide(probs_estimated, real_probs)
         c = np.min(c_numbers)
         results[i] = c
-
     scatter_plot(results, sizes, yscale='linear', marker="o", yname='c factor', xname='Grootte matrix', title='Impact matrixgrootte op schatting normen')
 
 
+if __name__ == '__main__':
+    name = "ElectricDevices"
+    func_name = "msm"
 
+    print("TEST 1: Probabilities basis test")
+    estimate_probabilities_test(name, func_name, 5)
 
+    print("TEST 2: c vs norm reference test")
+    norm_reference_test(name, func_name, 2000)
+
+    print("TEST 3: Average over all datasets test")
+    average_and_std_all_datasets_test(func_name)
+
+    print("TEST 4: c vs distance to metric space test")
+    compare_average_c_factor_with_distance_to_metric_space_test()
+
+    print("TEST 5: Size impact test")
+    submatrix_test(name, func_name)

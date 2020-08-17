@@ -15,8 +15,19 @@ def create_cluster_problem(data_name, func_name):
 
     solved_matrix = load_matrix(data_name, func_name)
 
-    cp = ClusterProblem(series, "dtw", solved_matrix=solved_matrix)
+    cp = ClusterProblem(series, func_name, solved_matrix=solved_matrix)
     return cp
+
+
+def get_labels(data_name):
+    train_path = folder + data_name + "/" + data_name + "_TRAIN.tsv"
+    test_path = folder + data_name + "/" + data_name + "_TEST.tsv"
+    labels, _ = load_timeseries_from_multiple_tsvs(train_path, test_path)
+    return labels
+
+
+def get_amount_of_classes(labels):
+    return len(np.unique(labels))
 
 
 def load_matrix(data_name, func_name):
@@ -26,6 +37,11 @@ def load_matrix(data_name, func_name):
     else:
         solved_matrix = None
     return solved_matrix
+
+
+def take_submatrix_matrix(matrix, indices):
+    submatrix = matrix[np.ix_(indices, indices)]
+    return submatrix
 
 
 def load_singular_values(data_name, func_name):
