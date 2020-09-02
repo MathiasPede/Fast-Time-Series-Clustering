@@ -82,15 +82,12 @@ dataset contains 5000 time series of length 140.
     labels, series = load_timeseries_from_multiple_tsvs(path1, path2)
     cp = ClusterProblem(series, "dtw")
     
-    rank = 20
+    rank = 50
 
     start_time = time.time()
     approx = solradm(cp, rank, epsilon=2.0)
     end_time = time.time()
     print("Time spent on approximation: " + str(end_time - start_time) + " seconds")
-
-    percentage_sampled = cp.percentage_sampled()
-    print("To compute the approximation " + str(round(100*percentage_sampled, 2)) + "% of the entries were computed")
 
     start_time = time.time()
     cp.sample_full_matrix()
@@ -102,10 +99,9 @@ dataset contains 5000 time series of length 140.
 
 This resulted in:
 
-    Time spent on approximation: 16.870744943618774 seconds
-    To compute the approximation 8.87% of the entries were computed
-    Time spent on exact matrix: 148.69200372695923 seconds
-    Relative error of the approximation: 0.03320240352034036
+    Time spent on approximation: 51.12228298187256 seconds
+    Time spent on exact matrix: 163.76525115966797 seconds
+    Relative error of the approximation: 0.019889041104915007
 
 ## References
 
