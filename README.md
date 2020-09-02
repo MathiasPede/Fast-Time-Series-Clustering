@@ -67,15 +67,15 @@ experiments show that `epsilon=2.0` is a good value) the amount of rows that is 
     approx = solradm(cp, rank, epsilon=2.0)
 
 ### Full example
-This example shows the approximation of DTW distance matrix of the ECG5000 dataset of the UCR Archive. This
-dataset contains 5000 time series of length 140.
+This example shows the approximation of DTW distance matrix of the Crop dataset of the UCR Archive. This
+dataset contains 24000 time series of length 46.
 
     from ftsc.data_loader import load_timeseries_from_multiple_tsvs
     from ftsc.cluster_problem import ClusterProblem
     from ftsc.solradm import solradm
     import time
 
-    name = "ECG5000"
+    name = "Crop"
     path1 = "Data/" + name + "/" + name + "_TRAIN.tsv"
     path2 = "Data/" + name + "/" + name + "_TEST.tsv"
 
@@ -99,9 +99,9 @@ dataset contains 5000 time series of length 140.
 
 This resulted in:
 
-    Time spent on approximation: 51.12228298187256 seconds
-    Time spent on exact matrix: 163.76525115966797 seconds
-    Relative error of the approximation: 0.019889041104915007
+    Time spent on approximation: 108.22551822662354 seconds
+    Time spent on exact matrix: 1151.2296922206879 seconds
+    Relative error of the approximation: 0.02027916138569064
 
 ## References
 
