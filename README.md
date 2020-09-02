@@ -89,9 +89,6 @@ dataset contains 5000 time series of length 140.
     end_time = time.time()
     print("Time spent on approximation: " + str(end_time - start_time) + " seconds")
 
-    percentage_sampled = cp.percentage_sampled()
-    print("To compute the approximation " + str(round(100*percentage_sampled, 2)) + "% of the entries were computed")
-
     start_time = time.time()
     cp.sample_full_matrix()
     end_time = time.time()
@@ -103,7 +100,6 @@ dataset contains 5000 time series of length 140.
 This resulted in:
 
     Time spent on approximation: 16.870744943618774 seconds
-    To compute the approximation 8.87% of the entries were computed
     Time spent on exact matrix: 148.69200372695923 seconds
     Relative error of the approximation: 0.03320240352034036
 
