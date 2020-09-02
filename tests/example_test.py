@@ -11,12 +11,9 @@ labels, series = load_timeseries_from_multiple_tsvs(path1, path2)
 cp = ClusterProblem(series, "dtw")
 
 start_time = time.time()
-approx = solradm(cp, 20, epsilon=2.0)
+approx = solradm(cp, 50, epsilon=2.0)
 end_time = time.time()
 print("Time spent on approximation: " + str(end_time - start_time) + " seconds")
-
-percentage_sampled = cp.percentage_sampled()
-print("To compute the approximation " + str(round(100*percentage_sampled, 2)) + "% of the entries were computed")
 
 start_time = time.time()
 cp.sample_full_matrix()

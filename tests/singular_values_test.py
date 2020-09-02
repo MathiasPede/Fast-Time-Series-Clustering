@@ -34,27 +34,28 @@ def run_best_error_plot(data_name, max=None):
                           title="Beste relatieve fout voor benaderingsrang " + data_name, marker='o')
 
 
-def run_singular_values_plot(data_name, func_name):
+def run_singular_values_plot(data_name, func_name, max=None):
     sing_vals = get_singular_values(data_name, "dtw")
 
-    max = floor(0.99 * len(sing_vals))
+    if max is None:
+        max = floor(0.99 * len(sing_vals))
     xas = np.arange(0, max)
     scatter_plot(sing_vals[0:max], xas, yname="Singuliere waarden $\sigma_i$", xname="Index $i$",
                  title="Singuliere waarden van " + func_name + " matrix " + data_name, marker='o')
 
 
 if __name__ == '__main__':
-    func_name = "dtw"
+    func_name = "ed"
 
     # Singular values and errors for 1 dataset
-    name = "ECG5000"
+    name = "Crop"
     run_singular_values_plot(name, func_name)
-    run_best_error_plot(name)
+    run_best_error_plot(name, max=None)
 
     # Compare all dataset error for certain ranks
     all_datasets = get_all_test_dataset_names()
     size = len(all_datasets)
-    ranks = [5, 10, 20, 50, 100]
+    ranks = [20, 50, 100, 200]
 
     errors = np.zeros(shape=(size, len(ranks)))
 

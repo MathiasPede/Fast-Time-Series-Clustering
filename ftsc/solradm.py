@@ -38,12 +38,12 @@ def solradm(cp: ClusterProblem, rank, epsilon=2.0, subsampling=True, zero_diagon
 
     # Sample columns according to the distribution
     if subsampling:
-        u = compute_u_subsampling(cp, probs, rank, epsilon=epsilon)
+        u = compute_u_subsampling(cp, probs, rank, epsilon=epsilon, debug=False)
     else:
         u = compute_u_with_svd(cp, probs, rank, epsilon=epsilon)
 
     # Solve the regression problem
-    v = well_balanced_regression(cp, u, epsilon=epsilon)
+    v = well_balanced_regression(cp, u, epsilon=epsilon, debug=False)
 
     # Multiply the matrix U and V
     approx = np.matmul(u, v)

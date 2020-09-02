@@ -63,14 +63,6 @@ def run_efficiency_test(data_name, func_name, max_rank=100, start_rank=10, step=
 
     error_size = 1 + int((max_rank-start_rank) / step)
 
-    best_errors = np.zeros(error_size)
-
-    for i in range(error_size):
-        current_rank = start_rank + i * step
-
-        best_error = calculate_best_relative_error_rank(data_name, func_name, current_rank)
-        best_errors[i] = best_error
-
     aca_averages, aca_stds, aca_sample_percentages = increasing_rank(test_aca, data_name, epsilon=0.001,
                     max_rank=max_rank, start_rank=start_rank, step=step, test_size=test_size, copy_cp=cp, rank_factor=24)
     np.save("results/solrad1_averages_" + data_name, aca_averages)
@@ -225,8 +217,8 @@ def test_sprl(data_name, rank, sample_factor=None, debug=False, copy_cp=None):
 
 
 if __name__ == "__main__":
-    name = "ECG5000"
-    func_name = "msm"
+    name = "FordA"
+    func_name = "dtw"
     max_rank = 10
 
     #run_increasing_rank_test(name, func_name, max_rank=90, start_rank=10, step=20, test_size=1)
