@@ -169,3 +169,7 @@ class ClusterProblem:
 
     def get_ground_truths(self):
         return self.series[:, 0]
+
+    def make_non_sampled_copy(self):
+        return ClusterProblem(self.series, self.compare, compare_args=self.compare_args,
+                              solved_matrix=self.solved_matrix)

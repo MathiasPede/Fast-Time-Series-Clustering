@@ -5,6 +5,7 @@ Similarity Preserving Representation Learning (SPRL) for Time Series Clustering
 import ftsc.cluster_problem as cp
 import numpy as np
 import random as rnd
+from ftsc.distance_functions import compute_distance
 from math import log, floor, pow, sqrt, atan2, cos
 
 
@@ -134,10 +135,10 @@ def convert_similarity_matrix_to_distance_matrix(similarity_matrix, distances_wi
     return distance_matrix
 
 
-def compute_distances_with_zero(data, func):
+def compute_distances_with_zero(data, func_name):
     size = len(data)
     distances = np.zeros(size)
     for i in range(size):
-        distances[i] = func(data[i][1:], np.array([0], dtype=float))
+        distances[i] = compute_distance(data[i][1:], np.array([0], dtype=float), func_name)
     return distances
 

@@ -3,16 +3,7 @@ import numpy as np
 from math import floor
 from ftsc.singular_values import calculate_best_relative_error_for_all_ranks, calculate_best_relative_error_rank
 from tests.plotting_utils import scatter_plot, multiple_scatter_plot
-from tests.tests_utils import load_singular_values, create_cluster_problem, get_all_test_dataset_names
-
-
-def get_singular_values(data_name, func_name):
-    # If stored in memory
-    sing_vals = load_singular_values(data_name, func_name)
-    if sing_vals is None:
-        cp = create_cluster_problem(data_name, func_name)
-        sing_vals = cp.get_singular_values()
-    return sing_vals
+from tests.tests_utils import get_singular_values, get_all_test_dataset_names
 
 
 def run_best_error_plot(data_name, max=None):

@@ -53,6 +53,15 @@ def load_singular_values(data_name, func_name):
     return sing_vals
 
 
+def get_singular_values(data_name, func_name):
+    # If stored in memory
+    sing_vals = load_singular_values(data_name, func_name)
+    if sing_vals is None:
+        cp = create_cluster_problem(data_name, func_name)
+        sing_vals = cp.get_singular_values()
+    return sing_vals
+
+
 def get_all_test_dataset_names():
     lst = [x[0] for x in os.walk("Data")][1:]
     drop_directory = [x[5:] for x in lst]

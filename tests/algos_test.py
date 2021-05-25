@@ -8,18 +8,20 @@ from ftsc.aca import aca_symm
 from ftsc.singular_values import calculate_best_relative_error_rank
 
 from tests.plotting_utils import bar_plot, multiple_plot
-from tests.tests_utils import create_cluster_problem
+from tests.tests_utils import create_cluster_problem, get_singular_values
 
 
-def run_increasing_rank_test(data_name, func_name, max_rank=100, start_rank=10, step=5, test_size=5, debug=False):
+def run_increasing_rank_test(data_name, func_name, max_rank=100, start_rank=10, step=5, test_size=5):
     # Fully sampled matrix to compare with
     cp = create_cluster_problem(data_name, func_name)
+    sing_vals = get_singular_values(data_name, func_name)
 
     if max_rank > cp.cp_size():
         max_rank = cp.cp_size()
 
     error_size = 1 + int((max_rank-start_rank) / step)
 
+    # Calculate the best possible errors based on the singular values
     best_errors = np.zeros(error_size)
     best_error_stds = np.zeros(error_size)
 
@@ -27,22 +29,23 @@ def run_increasing_rank_test(data_name, func_name, max_rank=100, start_rank=10, 
         current_rank = start_rank + i * step
 
         for p in range(test_size):
-            best_error = calculate_best_relative_error_rank(data_name, func_name, current_rank)
+            best_error = calculate_best_relative_error_rank(sing_vals, current_rank)
             best_errors[i] = best_error
 
+    # Compute the approximations
+    aca_averages, aca_stds, aca_sample_percentages = increasing_rank(aca_test, data_name, epsilon=0.001,
+                                                                     max_rank=max_rank, start_rank=start_rank, step=step, test_size=test_size, copy_cp=cp, rank_factor=1)
+    solrad1_averages, solrad1_stds, solrad1_sample_percentages = increasing_rank(solrad_test, data_name, epsilon=1.0,
+                                                                                 max_rank=max_rank, start_rank=start_rank, step=step,
+                                                                                 test_size=test_size, copy_cp=cp, rank_factor=1)
+    solrad2_averages, solrad2_stds, solrad2_sample_percentages = increasing_rank(solrad_test, data_name, epsilon=2.0,
+                                                                                 max_rank=max_rank, start_rank=start_rank, step=step,
+                                                                                 test_size=test_size, copy_cp=cp, rank_factor=1)
+    solrad4_averages, solrad4_stds, solrad4_sample_percentages = increasing_rank(solrad_test, data_name, epsilon=4.0,
+                                                                                 max_rank=max_rank, start_rank=start_rank, step=step,
+                                                                                 test_size=test_size, copy_cp=cp, rank_factor=1)
 
-    aca_averages, aca_stds, aca_sample_percentages = increasing_rank(test_aca, data_name, epsilon=0.001,
-                    max_rank=max_rank, start_rank=start_rank, step=step, test_size=test_size, copy_cp=cp, rank_factor=1)
-    solrad1_averages, solrad1_stds, solrad1_sample_percentages = increasing_rank(test_solrad, data_name, epsilon=1.0,
-                                                                     max_rank=max_rank, start_rank=start_rank, step=step,
-                                                                     test_size=test_size, copy_cp=cp, rank_factor=1)
-    solrad2_averages, solrad2_stds, solrad2_sample_percentages = increasing_rank(test_solrad, data_name, epsilon=2.0,
-                                                                     max_rank=max_rank, start_rank=start_rank, step=step,
-                                                                     test_size=test_size, copy_cp=cp, rank_factor=1)
-    solrad4_averages, solrad4_stds, solrad4_sample_percentages = increasing_rank(test_solrad, data_name, epsilon=4.0,
-                                                                     max_rank=max_rank, start_rank=start_rank, step=step,
-                                                                     test_size=test_size, copy_cp=cp, rank_factor=1)
-
+    # Plot the results
     data = np.array([aca_averages, solrad4_averages, solrad1_averages, best_errors])#, sprl_medians])
     xas = np.arange(start_rank, max_rank+step, step)
     yerr = np.array([aca_stds, solrad2_stds, solrad1_stds, best_error_stds])#, sprl_max_deviation])
@@ -61,25 +64,25 @@ def run_efficiency_test(data_name, func_name, max_rank=100, start_rank=10, step=
     if max_rank > cp.cp_size():
         max_rank = cp.cp_size()
 
-    error_size = 1 + int((max_rank-start_rank) / step)
+    #error_size = 1 + int((max_rank-start_rank) / step)
 
-    aca_averages, aca_stds, aca_sample_percentages = increasing_rank(test_aca, data_name, epsilon=0.001,
-                    max_rank=max_rank, start_rank=start_rank, step=step, test_size=test_size, copy_cp=cp, rank_factor=24)
+    aca_averages, aca_stds, aca_sample_percentages = increasing_rank(aca_test, data_name, epsilon=0.001,
+                                                                     max_rank=max_rank, start_rank=start_rank, step=step, test_size=test_size, copy_cp=cp, rank_factor=24)
     np.save("results/solrad1_averages_" + data_name, aca_averages)
     np.save("results/solrad1_percs_" + data_name, aca_sample_percentages)
-    solrad1_averages, solrad1_stds, solrad1_sample_percentages = increasing_rank(test_solrad, data_name, epsilon=1.0,
-                                                                     max_rank=max_rank, start_rank=start_rank, step=step,
-                                                                     test_size=test_size, copy_cp=cp, rank_factor=1)
+    solrad1_averages, solrad1_stds, solrad1_sample_percentages = increasing_rank(solrad_test, data_name, epsilon=1.0,
+                                                                                 max_rank=max_rank, start_rank=start_rank, step=step,
+                                                                                 test_size=test_size, copy_cp=cp, rank_factor=1)
     np.save("results/aca_averages_" + data_name, solrad1_averages)
     np.save("results/aca_percs_" + data_name, solrad1_sample_percentages)
-    solrad2_averages, solrad2_stds, solrad2_sample_percentages = increasing_rank(test_solrad, data_name, epsilon=2.0,
-                                                                     max_rank=max_rank, start_rank=start_rank, step=step,
-                                                                     test_size=test_size, copy_cp=cp, rank_factor=2)
+    solrad2_averages, solrad2_stds, solrad2_sample_percentages = increasing_rank(solrad_test, data_name, epsilon=2.0,
+                                                                                 max_rank=max_rank, start_rank=start_rank, step=step,
+                                                                                 test_size=test_size, copy_cp=cp, rank_factor=2)
     np.save("results/solrad2_averages_" + data_name, solrad2_averages)
     np.save("results/solrad2_percs_" + data_name, solrad2_sample_percentages)
-    solrad4_averages, solrad4_stds, solrad4_sample_percentages = increasing_rank(test_solrad, data_name, epsilon=4.0,
-                                                                     max_rank=max_rank, start_rank=start_rank, step=step,
-                                                                     test_size=test_size, copy_cp=cp, rank_factor=4)
+    solrad4_averages, solrad4_stds, solrad4_sample_percentages = increasing_rank(solrad_test, data_name, epsilon=4.0,
+                                                                                 max_rank=max_rank, start_rank=start_rank, step=step,
+                                                                                 test_size=test_size, copy_cp=cp, rank_factor=4)
     np.save("results/solrad4_averages_" + data_name, solrad4_averages)
     np.save("results/solrad4_percs_" + data_name, solrad4_sample_percentages)
 
@@ -153,7 +156,7 @@ def increasing_sample_percentage_sprl(data_name, func_name, start_perc=0.01, end
     while current_perc <= end_perc:
         print("SPRL : Computing for rank ")
         start_aca = time.time()
-        approx, cp = test_sprl(data_name, 40, sample_factor=sample_factor, copy_cp=cp)
+        approx, cp = sprl_test(data_name, 40, sample_factor=sample_factor, copy_cp=cp)
         sample_perc = cp.percentage_sampled()
         sample_percs.append(sample_perc)
         end_aca = time.time()
@@ -184,7 +187,7 @@ def get_number_of_tests(start_rank, max_rank, step):
     return i
 
 
-def test_aca(data_name, max_rank, epsilon=None, debug=False, copy_cp=None):
+def aca_test(data_name, max_rank, epsilon=None, copy_cp=None):
     if copy_cp is None:
         cp = create_cluster_problem(data_name, "msm")
     else:
@@ -193,7 +196,7 @@ def test_aca(data_name, max_rank, epsilon=None, debug=False, copy_cp=None):
     return approx, cp
 
 
-def test_solrad(data_name, rank, epsilon=None, copy_cp=None):
+def solrad_test(data_name, rank, epsilon=None, copy_cp=None):
     if copy_cp is None:
         cp = create_cluster_problem(data_name, "msm")
     else:
@@ -202,7 +205,7 @@ def test_solrad(data_name, rank, epsilon=None, copy_cp=None):
     return approx, cp
 
 
-def test_sprl(data_name, rank, sample_factor=None, debug=False, copy_cp=None):
+def sprl_test(data_name, rank, sample_factor=None, copy_cp=None):
     if copy_cp is None:
         cp = create_cluster_problem(data_name, "msm")
     else:
@@ -217,12 +220,12 @@ def test_sprl(data_name, rank, sample_factor=None, debug=False, copy_cp=None):
 
 
 if __name__ == "__main__":
-    name = "FordA"
+    name = "ECG5000"
     func_name = "dtw"
     max_rank = 10
 
-    #run_increasing_rank_test(name, func_name, max_rank=90, start_rank=10, step=20, test_size=1)
-    #run_efficiency_test(name, func_name, max_rank=50, start_rank=1, step=2, test_size=1)
+    #run_increasing_rank_test(name, func_name, max_rank=50, start_rank=10, step=20, test_size=1)
+    #run_efficiency_test(name, func_name, max_rank=9, start_rank=5, step=2, test_size=1)
     #run_all_datasets_better_than_accuracy_test(func_name, [0.1, 0.05, 0.02, 0.01], start_index=0)
     #increasing_sample_percentage_sprl(name, func_name)
     show_results_efficiency_test(name)
